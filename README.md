@@ -139,7 +139,6 @@ DragonLegendHotel/
 
 ## 🔒 Bảo Mật & Các Thông Tin Đã Được Ẩn / Loại Trừ
 
-Khi đưa mã nguồn lên GitHub, hệ thống đã được cấu hình [`.gitignore`](.gitignore) và làm sạch dữ liệu nhạy cảm:
 - **Ẩn thông tin xác thực trong [`wp-config.php`](wp-config.php)**:
   - Toàn bộ khóa bảo mật WordPress (`AUTH_KEY`, `SECURE_AUTH_KEY`, `LOGGED_IN_KEY`, `NONCE_KEY` & `SALT`) được chuyển sang đọc từ biến môi trường `getenv()`.
   - Khóa kết nối **Cloudflare R2 (`ADVMO_CLOUDFLARE_R2_KEY`, `ADVMO_CLOUDFLARE_R2_SECRET`, `ADVMO_CLOUDFLARE_R2_ENDPOINT`)** và mật khẩu cơ sở dữ liệu thực tế đã được ẩn hoàn toàn.
