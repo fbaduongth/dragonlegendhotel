@@ -1,4 +1,4 @@
-# 🐉 Dragon Legend Hotel Hạ Long — Hệ Thống Website & Đặt Phòng Khách Sạn 4 Sao
+# Dragon Legend Hotel Hạ Long — Hệ Thống Website & Đặt Phòng Khách Sạn 4 Sao
 
 Website chính thức của **Dragon Legend Hotel Hạ Long** ([https://dragonlegendhotel.com](https://dragonlegendhotel.com)) — Khách sạn 4 sao phong cách Tân Cổ Điển tọa lạc tại trung tâm Đại lộ Hạ Long Marine, Bãi Cháy, TP. Hạ Long, Quảng Ninh.
 
