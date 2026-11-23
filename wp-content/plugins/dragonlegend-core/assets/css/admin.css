@@ -1,0 +1,54 @@
+/**
+ * Dragon Legend Hotel Core - Admin Styles
+ */
+
+.dl-metabox-table th {
+    font-weight: 600;
+    color: #0b1a2d;
+    padding: 15px 10px;
+    vertical-align: top;
+}
+
+.dl-metabox-table td {
+    padding: 12px 10px;
+}
+
+.dl-metabox-table input[type="text"],
+.dl-metabox-table input[type="number"],
+.dl-metabox-table select {
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+.dl-metabox-table input[type="text"]:focus,
+.dl-metabox-table input[type="number"]:focus,
+.dl-metabox-table textarea:focus {
+    border-color: #c5a880;
+    box-shadow: 0 0 0 1px #c5a880;
+    outline: none;
+}
+
+.dl-checkbox-grid label {
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    background: #fdfdfd;
+    padding: 6px 10px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.dl-checkbox-grid label:hover {
+    background: #fff8f0;
+    border-color: #c5a880;
+}
+
+.dl-gallery-item {
+    transition: transform 0.2s ease;
+}
+
+.dl-gallery-item:hover {
+    transform: scale(1.05);
+}

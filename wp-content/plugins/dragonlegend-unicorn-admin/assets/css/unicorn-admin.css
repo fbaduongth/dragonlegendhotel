@@ -1,0 +1,841 @@
+/**
+ * Dragon Legend - Unicorn Admin UI Theme
+ * Aesthetic: Unicorn Startup (Youthful, Vibrant, Dynamic, Pixel-Perfect Layout)
+ * Version: 1.1.0
+ */
+
+/* ==========================================================================
+   1. Typography & Global Settings
+   ========================================================================== */
+body.dl-unicorn-admin-theme,
+.dl-unicorn-admin-theme #wpcontent,
+.dl-unicorn-admin-theme #wpfooter,
+.dl-unicorn-admin-theme input,
+.dl-unicorn-admin-theme select,
+.dl-unicorn-admin-theme textarea,
+.dl-unicorn-admin-theme button {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+body.dl-unicorn-admin-theme {
+    background: #f8fafc !important;
+    color: #0f172a;
+}
+
+#wpwrap {
+    background: #f8fafc !important;
+}
+
+#wpbody-content {
+    padding-bottom: 40px;
+}
+
+/* ==========================================================================
+   2. Top Admin Bar (#wpadminbar) - Clean, Standard 32px Height
+   ========================================================================== */
+#wpadminbar {
+    background: #0f172a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+#wpadminbar .ab-item,
+#wpadminbar a.ab-item,
+#wpadminbar > #wp-toolbar span.ab-label,
+#wpadminbar > #wp-toolbar span.noticon {
+    color: #cbd5e1 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+}
+
+#wpadminbar .ab-icon::before,
+#wpadminbar .ab-item::before {
+    color: #94a3b8 !important;
+    transition: all 0.15s ease !important;
+}
+
+#wpadminbar li:hover > .ab-item,
+#wpadminbar li:hover > .ab-item .ab-icon::before {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+#wpadminbar #wp-admin-bar-site-name > .ab-item {
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+
+#wpadminbar #wp-admin-bar-my-account > .ab-item .avatar {
+    border-radius: 50% !important;
+    border: 1.5px solid #8b5cf6 !important;
+    box-shadow: 0 0 6px rgba(139, 92, 246, 0.4) !important;
+    margin-right: 6px !important;
+    vertical-align: middle !important;
+}
+
+/* Admin Bar Dropdowns */
+#wpadminbar .menupop .ab-sub-wrapper {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    padding: 6px !important;
+}
+
+#wpadminbar .ab-submenu .ab-item {
+    border-radius: 6px !important;
+    font-size: 13px !important;
+}
+
+#wpadminbar .ab-submenu .ab-item:hover {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   3. Sidebar Menu (#adminmenu) - Standard 160px Geometry
+   ========================================================================== */
+#adminmenuback,
+#adminmenuwrap,
+#adminmenu {
+    background: #0f172a !important;
+}
+
+/* Unicorn Brand Header Item */
+#adminmenu li.dl-unicorn-brand-item {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 6px !important;
+}
+
+#adminmenu li.dl-unicorn-brand-item .dl-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.02);
+    transition: background 0.2s ease;
+}
+
+#adminmenu li.dl-unicorn-brand-item .dl-brand-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.dl-brand-icon {
+    font-size: 18px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.dl-brand-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.dl-brand-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+.dl-brand-badge {
+    font-size: 9px;
+    font-weight: 800;
+    color: #ffffff;
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    padding: 1px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* Brand Item in Folded Mode */
+body.folded #adminmenu li.dl-unicorn-brand-item .dl-brand-info {
+    display: none !important;
+}
+
+body.folded #adminmenu li.dl-unicorn-brand-item .dl-brand-link {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+/* Menu Items */
+#adminmenu li.menu-top {
+    border-top: none !important;
+    border-bottom: none !important;
+    margin: 2px 6px !important;
+    border-radius: 8px !important;
+    transition: background 0.15s ease;
+}
+
+#adminmenu a.menu-top {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    border-radius: 8px !important;
+}
+
+#adminmenu .wp-menu-image::before {
+    color: #94a3b8 !important;
+    transition: color 0.15s ease;
+}
+
+#adminmenu li.menu-top:hover,
+#adminmenu li.opensub > a.menu-top {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+#adminmenu li.menu-top:hover a.menu-top,
+#adminmenu li.opensub > a.menu-top {
+    color: #ffffff !important;
+}
+
+#adminmenu li.menu-top:hover .wp-menu-image::before,
+#adminmenu li.opensub > a.menu-top .wp-menu-image::before {
+    color: #ffffff !important;
+}
+
+/* Active Menu Item (Vibrant Unicorn Pill) */
+#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
+#adminmenu li.current a.menu-top {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 3px 12px rgba(139, 92, 246, 0.35) !important;
+}
+
+#adminmenu li.wp-has-current-submenu .wp-menu-image::before,
+#adminmenu li.current .wp-menu-image::before {
+    color: #ffffff !important;
+}
+
+#adminmenu .wp-menu-arrow {
+    display: none !important;
+}
+
+/* Submenu Items (Floating Card Flyout) */
+#adminmenu .wp-submenu {
+    background: #1e293b !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+    padding: 6px !important;
+}
+
+#adminmenu .wp-submenu a {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+}
+
+#adminmenu .wp-submenu a:hover {
+    background: rgba(139, 92, 246, 0.15) !important;
+    color: #c4b5fd !important;
+}
+
+#adminmenu .wp-submenu li.current a {
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+}
+
+/* Update Badges (Vibrant Pills) */
+#adminmenu .update-plugins,
+#adminmenu .plugin-count,
+#adminmenu .awaiting-mod {
+    background: linear-gradient(135deg, #ec4899, #f43f5e) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 2px 7px !important;
+    box-shadow: 0 2px 6px rgba(236, 72, 153, 0.4) !important;
+}
+
+/* Menu Separator */
+#adminmenu li.wp-menu-separator {
+    height: 1px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    margin: 8px 12px !important;
+}
+
+/* Collapse Button */
+#collapse-button {
+    color: #94a3b8 !important;
+    border-radius: 6px !important;
+    margin: 8px 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+#collapse-button:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ==========================================================================
+   4. Dashboard Welcome Hero (Full-Width Welcome Panel)
+   ========================================================================== */
+#welcome-panel {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 16px 0 24px 0 !important;
+    box-shadow: none !important;
+}
+
+.dl-unicorn-hero-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #2e1065 100%);
+    border-radius: 16px;
+    padding: 28px 34px;
+    color: #ffffff;
+    box-shadow: 0 10px 25px -4px rgba(99, 102, 241, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.dl-unicorn-hero-banner::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.1) 50%, transparent 70%);
+    pointer-events: none;
+}
+
+.dl-hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.dl-hero-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.dl-hero-greeting-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.dl-pill-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+}
+
+.dl-hero-badge-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #c4b5fd;
+    text-transform: uppercase;
+}
+
+.dl-hero-title {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    margin: 0 0 6px 0 !important;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.dl-hero-name {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dl-hero-desc {
+    font-size: 14px;
+    color: #cbd5e1;
+    margin: 0 0 20px 0;
+    max-width: 720px;
+    line-height: 1.6;
+}
+
+.dl-hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    width: fit-content;
+}
+
+.dl-stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.dl-stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.dl-stat-label {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-top: 3px;
+}
+
+.dl-stat-sep {
+    width: 1px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.dl-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dl-btn-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dl-btn-pill .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.dl-btn-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
+
+.dl-btn-gradient:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
+    color: #ffffff;
+}
+
+.dl-btn-outline {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #f8fafc;
+}
+
+.dl-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: translateY(-1.5px);
+}
+
+.dl-btn-glass {
+    background: rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+}
+
+.dl-btn-glass:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    transform: translateY(-1.5px);
+}
+
+/* ==========================================================================
+   5. Buttons - Keeping Core Line-Height & Heights for 100% Horizontal Alignment
+   ========================================================================== */
+.wp-core-ui .button,
+.wp-core-ui .button-secondary {
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+    transition: all 0.15s ease !important;
+}
+
+.wp-core-ui .button:hover,
+.wp-core-ui .button-secondary:hover {
+    background: #f8fafc !important;
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
+
+.wp-core-ui .button-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+    text-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.wp-core-ui .button-primary:hover,
+.wp-core-ui .button-primary:focus {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.45) !important;
+    filter: brightness(1.06) !important;
+    color: #ffffff !important;
+}
+
+.page-title-action {
+    border-radius: 8px !important;
+    border: 1.5px solid #6366f1 !important;
+    color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.06) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    transition: all 0.15s ease !important;
+}
+
+.page-title-action:hover {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ==========================================================================
+   6. Form Inputs & Selects
+   ========================================================================== */
+input[type=text],
+input[type=search],
+input[type=email],
+input[type=password],
+input[type=number],
+input[type=tel],
+input[type=url],
+select {
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    font-size: 13px !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+textarea {
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    color: #0f172a !important;
+}
+
+input[type=text]:focus,
+input[type=search]:focus,
+input[type=email]:focus,
+input[type=password]:focus,
+input[type=number]:focus,
+input[type=tel]:focus,
+input[type=url]:focus,
+select:focus,
+textarea:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+    outline: none !important;
+}
+
+input[type=checkbox],
+input[type=radio] {
+    accent-color: #8b5cf6 !important;
+    border-radius: 4px !important;
+}
+
+/* ==========================================================================
+   7. Tables (.wp-list-table) - Standard Cell Alignment & Card Wrapper
+   ========================================================================== */
+.wp-list-table {
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+.wp-list-table thead th,
+.wp-list-table tfoot th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.wp-list-table thead th a,
+.wp-list-table tfoot th a {
+    color: #475569 !important;
+}
+
+.wp-list-table tbody tr {
+    transition: background 0.15s ease !important;
+}
+
+.wp-list-table tbody tr:hover {
+    background: #f8faff !important;
+}
+
+.wp-list-table td {
+    color: #1e293b !important;
+    font-size: 13px !important;
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+.wp-list-table td.title strong a,
+.wp-list-table td.post-title strong a {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    transition: color 0.15s ease !important;
+}
+
+.wp-list-table td.title strong a:hover,
+.wp-list-table td.post-title strong a:hover {
+    color: #6366f1 !important;
+}
+
+.wp-list-table .row-actions a {
+    color: #6366f1 !important;
+}
+
+.wp-list-table .row-actions .trash a {
+    color: #f43f5e !important;
+}
+
+/* Status Badges */
+.dl-badge,
+.post-state {
+    display: inline-block !important;
+    padding: 2px 8px !important;
+    border-radius: 9999px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    margin-left: 6px !important;
+}
+
+.dl-badge-draft,
+.post-state {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+}
+
+.dl-badge-private {
+    background: #f3e8ff !important;
+    color: #7e22ce !important;
+}
+
+.dl-badge-pending {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+}
+
+/* Tablenav pagination */
+.tablenav-pages .pagination-links a,
+.tablenav-pages .pagination-links span {
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    padding: 3px 8px !important;
+    font-weight: 600 !important;
+}
+
+.tablenav-pages .pagination-links a:hover {
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
+
+/* ==========================================================================
+   8. Postboxes & Widgets (.postbox)
+   ========================================================================== */
+.postbox {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    overflow: hidden !important;
+    margin-bottom: 20px !important;
+    transition: box-shadow 0.2s ease !important;
+}
+
+.postbox:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+.postbox-header,
+.postbox .hndle {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+.postbox .inside {
+    padding: 16px 20px !important;
+}
+
+/* ==========================================================================
+   9. Notices & Alerts
+   ========================================================================== */
+.notice {
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left-width: 4px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    padding: 10px 14px !important;
+    margin: 14px 0 !important;
+    font-size: 13px !important;
+}
+
+.notice-success,
+.updated {
+    border-left-color: #10b981 !important;
+    background: #f0fdf4 !important;
+}
+
+.notice-warning {
+    border-left-color: #f59e0b !important;
+    background: #fffbeb !important;
+}
+
+.notice-error {
+    border-left-color: #ef4444 !important;
+    background: #fef2f2 !important;
+}
+
+.notice-info {
+    border-left-color: #6366f1 !important;
+    background: #eef2ff !important;
+}
+
+/* ==========================================================================
+   10. Admin Footer
+   ========================================================================== */
+#wpfooter {
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 16px 20px 20px !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+    background: transparent !important;
+}
+
+.dl-unicorn-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dl-footer-unicorn-gradient {
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.dl-footer-pill {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+}
+
+/* ==========================================================================
+   11. Dragon Legend Content Manager & Core Metabox Integration
+   ========================================================================== */
+.dl-unicorn-admin-theme .dl-admin-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #2e1065 100%) !important;
+    border-left: 5px solid #8b5cf6 !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15) !important;
+    border-radius: 12px !important;
+}
+
+.dl-unicorn-admin-theme .dl-badge-luxury {
+    background: linear-gradient(135deg, #6366f1, #ec4899) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35) !important;
+}
+
+.dl-unicorn-admin-theme .dl-tab-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(139, 92, 246, 0.3) !important;
+}
+
+.dl-unicorn-admin-theme .dl-tab-pane {
+    border-radius: 12px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.dl-unicorn-admin-theme .dl-save-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 3px 10px rgba(139, 92, 246, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+
+.dl-unicorn-admin-theme .dl-save-btn:hover {
+    transform: translateY(-1.5px) !important;
+    box-shadow: 0 5px 16px rgba(139, 92, 246, 0.5) !important;
+    filter: brightness(1.08) !important;
+}
+
+.dl-unicorn-admin-theme .dl-checkbox-grid label:hover {
+    background: rgba(139, 92, 246, 0.08) !important;
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}

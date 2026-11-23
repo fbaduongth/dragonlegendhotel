@@ -1,0 +1,211 @@
+/**
+ * Dragon Legend - Unicorn Login UI Theme
+ * Vibrant, modern glassmorphic login screen for Dragon Legend Hotel
+ */
+
+body.login {
+    background: #0b0f19 !important;
+    background-image: 
+        radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.3) 0%, transparent 45%),
+        radial-gradient(circle at 85% 75%, rgba(236, 72, 153, 0.3) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 60%) !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 40px 15px !important;
+    box-sizing: border-box !important;
+}
+
+#login {
+    width: 100%;
+    max-width: 420px;
+    padding: 30px 20px !important;
+    margin: auto !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* Unicorn Logo Header */
+#login h1 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+#login h1 a {
+    width: 68px !important;
+    height: 68px !important;
+    background-size: contain !important;
+    border-radius: 18px !important;
+    background-image: none !important;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 12px !important;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.45) !important;
+    position: relative;
+    text-indent: 0 !important;
+    overflow: visible !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#login h1 a:hover {
+    transform: scale(1.05) rotate(3deg);
+}
+
+#login h1 a::before {
+    content: '🦄';
+    font-size: 34px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+#login h1::after {
+    content: 'DRAGON LEGEND HOTEL';
+    display: block;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Glassmorphic Form Card */
+#loginform {
+    background: rgba(17, 24, 39, 0.85) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.1) !important;
+    padding: 34px 30px !important;
+}
+
+/* Form Labels & Inputs */
+#loginform label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    margin-bottom: 8px !important;
+}
+
+#loginform input[type="text"],
+#loginform input[type="password"] {
+    background: rgba(11, 15, 25, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+    height: 44px !important;
+    margin-top: 4px !important;
+    margin-bottom: 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+#loginform input[type="text"]:focus,
+#loginform input[type="password"]:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3) !important;
+    outline: none !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* Remember Me Checkbox */
+.forgetmenot {
+    float: none !important;
+    margin-bottom: 20px !important;
+}
+
+.forgetmenot label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 13px !important;
+    color: #94a3b8 !important;
+}
+
+.forgetmenot input[type="checkbox"] {
+    accent-color: #8b5cf6 !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 4px !important;
+}
+
+/* Submit Button */
+.submit {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#loginform #wp-submit {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%) !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    width: 100% !important;
+    height: 46px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 18px rgba(139, 92, 246, 0.45) !important;
+    cursor: pointer !important;
+    text-shadow: none !important;
+    float: none !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#loginform #wp-submit:hover,
+#loginform #wp-submit:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.6) !important;
+    filter: brightness(1.08) !important;
+}
+
+/* Bottom Links */
+#nav,
+#backtoblog {
+    text-align: center !important;
+    padding: 0 !important;
+    margin-top: 18px !important;
+}
+
+#nav a,
+#backtoblog a {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease !important;
+}
+
+#nav a:hover,
+#backtoblog a:hover {
+    color: #c4b5fd !important;
+}
+
+/* Login Error / Message Notices */
+.login #login_error,
+.login .message,
+.login .success {
+    background: rgba(17, 24, 39, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+    font-size: 13px !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+    padding: 12px 18px !important;
+}
+
+.login #login_error {
+    border-left: 5px solid #f43f5e !important;
+}
+
+.login .message {
+    border-left: 5px solid #6366f1 !important;
+}

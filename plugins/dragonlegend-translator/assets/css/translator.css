@@ -1,0 +1,157 @@
+/**
+ * Dragon Legend Auto Translator - Stylesheet
+ * Đảm bảo giao diện dịch tự động sang trọng, hòa hợp với giao diện khách sạn
+ * Hoàn toàn ẩn các thanh công cụ và iframe mặc định của Google
+ */
+
+/* ==========================================================================
+   1. SUPPRESS GOOGLE TRANSLATE DEFAULT BANNERS & IFRAMES
+   ========================================================================== */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-te-spinner-pos,
+.skiptranslate > iframe {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    pointer-events: none !important;
+}
+
+body {
+    top: 0px !important;
+    position: static !important;
+}
+
+.goog-tooltip,
+.goog-tooltip:hover {
+    display: none !important;
+}
+
+.goog-text-highlight {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#dl_google_translate_element {
+    display: none !important;
+}
+
+/* ==========================================================================
+   2. TOPBAR LANGUAGE SWITCHER (INLINE PILL STYLE)
+   ========================================================================== */
+.dl-lang-switcher-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dl-lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.dl-lang-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: #94a3b8; /* slate-400 */
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.dl-lang-btn:hover {
+    color: #c5a880; /* gold */
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dl-lang-btn.active {
+    color: #fbbf24; /* amber gold */
+    font-weight: 700;
+    border-color: rgba(197, 168, 128, 0.45);
+    background: rgba(197, 168, 128, 0.16);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dl-lang-btn .flag-emoji {
+    font-size: 13px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.dl-lang-btn .dl-flag-svg {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.dl-lang-divider {
+    color: #475569; /* slate-600 */
+    font-size: 10px;
+    user-select: none;
+}
+
+/* ==========================================================================
+   3. MOBILE DRAWER LANGUAGE SWITCHER
+   ========================================================================== */
+.dl-lang-switcher-mobile {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+}
+
+.dl-lang-switcher-mobile .dl-lang-btn {
+    justify-content: center;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 11px;
+    color: #cbd5e1;
+    text-align: center;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dl-lang-switcher-mobile .dl-lang-btn.active {
+    background: rgba(197, 168, 128, 0.22);
+    border-color: #c5a880;
+    color: #fbbf24;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   4. TRANSLATION INDICATOR SPINNER (Subtle)
+   ========================================================================== */
+.dl-translating-pulse {
+    animation: dlPulse 1.2s infinite;
+}
+
+@keyframes dlPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

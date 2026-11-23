@@ -1,0 +1,493 @@
+/**
+ * Dragon Legend Content Manager - Admin Stylesheet
+ */
+
+.dl-admin-wrap {
+    max-width: 1200px;
+    margin: 25px 20px 40px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.dl-admin-header {
+    background: linear-gradient(135deg, #07111e 0%, #0d2238 100%);
+    color: #fff;
+    padding: 24px 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 6px solid #c5a880;
+}
+
+.dl-admin-header h1 {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    padding: 0;
+    letter-spacing: 0.5px;
+}
+
+.dl-admin-header p {
+    color: #94a3b8;
+    margin: 0;
+    font-size: 13px;
+}
+
+.dl-badge-luxury {
+    background: linear-gradient(135deg, #d97706, #c5a880);
+    color: #07111e;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Tab Navigation */
+.dl-tabs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #e2e8f0;
+    padding: 6px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.dl-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dl-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+    color: #0f172a;
+}
+
+.dl-tab-btn.active {
+    background: #07111e;
+    color: #c5a880;
+    box-shadow: 0 2px 8px rgba(7, 17, 30, 0.25);
+}
+
+/* Tab Content Panes */
+.dl-tab-pane {
+    display: none;
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+}
+
+.dl-tab-pane.active {
+    display: block;
+    animation: dlFadeIn 0.3s ease;
+}
+
+@keyframes dlFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dl-section-heading {
+    font-size: 18px;
+    font-weight: 700;
+    color: #07111e;
+    margin: 0 0 8px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dl-section-desc {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+/* Form Grid & Elements */
+.dl-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.dl-form-group {
+    margin-bottom: 18px;
+}
+
+.dl-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.dl-form-group label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dl-form-group label span.required {
+    color: #ef4444;
+}
+
+.dl-form-group input[type="text"],
+.dl-form-group input[type="url"],
+.dl-form-group input[type="email"],
+.dl-form-group input[type="number"],
+.dl-form-group textarea,
+.dl-form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: #0f172a;
+    background-color: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.dl-form-group input:focus,
+.dl-form-group textarea:focus {
+    background-color: #fff;
+    border-color: #c5a880;
+    box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.25);
+    outline: none;
+}
+
+.dl-form-group .description {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* Image Upload Preview Box */
+.dl-image-upload-wrap {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 8px;
+}
+
+.dl-image-preview {
+    width: 140px;
+    height: 75px;
+    border-radius: 8px;
+    border: 2px dashed #cbd5e1;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+#preview-header-logo,
+#preview-footer-logo {
+    width: 180px;
+    background: #0f1e36;
+    padding: 6px;
+}
+
+.dl-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#preview-header-logo img,
+#preview-footer-logo img {
+    object-fit: contain;
+}
+
+.dl-image-preview .placeholder {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+/* Card Boxes inside tab */
+.dl-card-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.dl-card-box-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Submit bar */
+.dl-submit-bar {
+    position: sticky;
+    bottom: 20px;
+    background: rgba(7, 17, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(197, 168, 128, 0.4);
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+}
+
+.dl-submit-bar .note {
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+.dl-save-btn {
+    background: linear-gradient(135deg, #d97706, #c5a880) !important;
+    color: #07111e !important;
+    border: none !important;
+    font-weight: 700 !important;
+    font-size: 13.5px !important;
+    padding: 10px 28px !important;
+    border-radius: 30px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4) !important;
+    transition: all 0.2s !important;
+}
+
+.dl-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(217, 119, 6, 0.6) !important;
+}
+
+/* Amenities Repeater Styles */
+.dl-amenities-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 15px;
+}
+
+.dl-amenity-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.dl-amenity-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dl-amenity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    border-bottom: 1px dashed #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.dl-amenity-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dl-amenity-badge {
+    background: #07111e;
+    color: #c5a880;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dl-amenity-header-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #07111e;
+}
+
+.dl-amenity-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dl-btn-order {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+
+.dl-btn-order:hover {
+    background: #07111e;
+    color: #c5a880;
+    border-color: #07111e;
+}
+
+.dl-btn-delete {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+
+.dl-btn-delete:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+.dl-amenity-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.6fr 3fr;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .dl-amenity-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dl-icon-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dl-icon-preview-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b45309;
+    flex-shrink: 0;
+}
+
+.dl-icon-preview-box svg {
+    width: 22px;
+    height: 22px;
+}
+
+.dl-add-amenity-bar {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.dl-btn-add-amenity {
+    background: #0f766e;
+    color: #ffffff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3);
+}
+
+.dl-btn-add-amenity:hover {
+    background: #115e59;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(15, 118, 110, 0.4);
+}
+
+/* Table Layout for Amenities */
+.dl-amenities-table {
+    border-collapse: collapse !important;
+}
+
+.dl-amenities-table th {
+    font-size: 13px !important;
+}
+
+.dl-amenities-table td {
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.dl-amenities-table tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+.dl-btn-row-up, .dl-btn-row-down {
+    transition: all 0.15s ease;
+}
+
+.dl-btn-row-up:hover, .dl-btn-row-down:hover {
+    background: #07111e !important;
+    color: #c5a880 !important;
+    border-color: #07111e !important;
+}
+
+.dl-btn-delete-row:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+}

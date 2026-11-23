@@ -1,0 +1,39 @@
+# =====================================================================
+# Dragon Legend Hotel - Git Ignore Configuration
+# =====================================================================
+
+# 1. Loại trừ thư mục backup_27102026 và các thư mục/gói sao lưu
+backup_27102026/
+backup_27102026
+backup_dragonlegendhotel_*/
+*backup*/
+wp-content/aiowps_backups/
+wp-content/updraft/
+wp-content/upgrade-temp-backup/
+wp-content/litespeed/
+wp-content/wp-cloudflare-super-page-cache/
+
+# 2. Loại trừ tệp cơ sở dữ liệu & thông tin nhạy cảm
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite-journal
+wp-content/database/.ht.sqlite*
+wp-content/db.php.bak
+.env
+.env.*
+
+# 3. Loại trừ các gói nén & binary máy chủ cục bộ
+*.zip
+*.tar
+*.tar.gz
+bin/frankenphp
+
+# 4. Loại trừ tệp tạm, log và hệ điều hành
+.DS_Store
+Thumbs.db
+server.log
+.server.pid
+temp_*.php
+wp-content/uploads/wpo/logs/
+*.log

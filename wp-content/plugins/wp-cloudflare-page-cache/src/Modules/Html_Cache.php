@@ -1,0 +1,537 @@
+<?php
+
+namespace SPC\Modules;
+
+use SPC\Constants;
+use SPC\Services\Settings_Store;
+use SPC\Utils\Helpers;
+use SPC\Utils\Logger;
+
+class Html_Cache implements Module_Interface {
+	/**
+	 * Cron hook of the follow-up cleanup, see {@see self::delete_unused_cached_urls()}.
+	 */
+	public const CLEANUP_HOOK = 'spc_delete_unused_cached_page_list';
+
+	/**
+	 * @var bool
+	 */
+	private $current_page_can_be_cached = false;
+
+	/**
+	 * @return void
+	 */
+	public function init() {
+		add_action( 'init', [ $this, 'maybe_download_all_cached_urls' ] );
+		add_action( self::CLEANUP_HOOK, [ $this, 'delete_unused_cached_urls' ] );
+		add_action( 'update_option_' . Settings_Store::CONFIG_OPTION, [ $this, 'schedule_cleanup_after_turning_off' ], 10, 2 );
+
+		if ( ! Settings_Store::get_instance()->get( Constants::SETTING_PURGE_ONLY_HTML ) ) {
+			return;
+		}
+
+		add_action( 'shutdown', [ $this, 'add_current_url_to_cache' ], PHP_INT_MAX );
+	}
+
+	/**
+	 * @return void
+	 */
+	public function cache_current_page() {
+		$this->current_page_can_be_cached = true;
+	}
+
+	/**
+	 * @return void
+	 */
+	public function do_not_cache_current_page() {
+		$this->current_page_can_be_cached = false;
+	}
+
+	/**
+	 * @param string $url
+	 * @return string
+	 */
+	private function add_url_to_cache( $url ) {
+		$cache_path = $this->init_directory();
+		$cache_key  = $this->get_cache_key( $url );
+
+		$filename     = $cache_path . $cache_key;
+		$file_content = "{$url}|" . time();
+
+		// Writers share the lock; the cleanup takes it alone, see delete_unused_cached_urls().
+		$lock = $this->open_lock_file();
+
+		if ( null !== $lock ) {
+			flock( $lock, LOCK_SH );
+		}
+
+		file_put_contents( $cache_path . $cache_key, $file_content );
+
+		if ( null !== $lock ) {
+			fclose( $lock );
+		}
+
+		return $filename;
+	}
+
+	/**
+	 * @return void
+	 */
+	public function add_current_url_to_cache() {
+		global $wp_query;
+
+		// First check for WP CLI as $_SERVER is not available for WP_CLI
+		if ( defined( 'WP_CLI' ) && WP_CLI === true ) {
+			Logger::log( 'html_cache::add_current_url_to_cache', 'The URL cannot be cached due to WP CLI.', true );
+
+			return;
+		}
+
+		$host        = isset( $_SERVER['HTTP_HOST'] ) ? trim( (string) $_SERVER['HTTP_HOST'] ) : '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? trim( (string) $_SERVER['REQUEST_URI'] ) : '';
+
+		if ( empty( $host ) || empty( $request_uri ) ) {
+			Logger::log( 'html_cache::add_current_url_to_cache', 'The URL cannot be cached due to missing HTTP_HOST or REQUEST_URI.', true );
+
+			return;
+		}
+
+		$parts       = parse_url( home_url() );
+		$current_url = "{$parts['scheme']}://{$host}{$request_uri}";
+
+		if ( isset( $wp_query ) && function_exists( 'is_404' ) && is_404() ) {
+			Logger::log( 'html_cache::add_current_url_to_cache', 'The URL ' . esc_url_raw( $current_url ) . ' cannot be cached because it returns 404.', true );
+
+			return;
+		}
+
+		if ( $this->current_page_can_be_cached == false ) {
+			Logger::log( 'html_cache::add_current_url_to_cache', "The URL {$current_url} cannot be cached due to caching rules.", true );
+
+			return;
+		}
+
+		if ( strcasecmp( $_SERVER['HTTP_HOST'], $parts['host'] ) !== 0 ) {
+			Logger::log( 'html_cache::add_current_url_to_cache', "The URL {$current_url} cannot be cached because the host does not match with the one of home_url() function ({$parts['host']}).", true );
+
+			return;
+		}
+
+		/**
+		 * Now check if the $current_url has any unwanted query parameters like (v=, ref=, aff=, utm_*=)
+		 * If the URL has such things, then don't add them to the html_cache as html_cache should only hold
+		 * proper URLs like /example-car/ and not /example-car/?v=123&aff=123&ref=h65
+		 */
+		$current_url_parsed       = parse_url( $current_url );
+		$current_url_query_params = [];
+
+		if ( array_key_exists( 'query', $current_url_parsed ) ) {
+
+			if ( $current_url_parsed['query'] === '' ) {
+				Logger::log( 'html_cache::add_current_url_to_cache', "This URL {$current_url} cannot be cached because the URL has no query param but has the question mark at the end of the URL without actually having any query params. It makes no sense to cache this page as the proper version of the URL will be considered for caching.", true );
+
+				return;
+			} else {
+
+				// First parse the query params to an array to manage it better
+				parse_str( $current_url_parsed['query'], $current_url_query_params );
+
+				// Get the array of query params that would be ignored
+				$ignored_query_params = Helpers::get_ignored_query_params();
+
+				// Loop though $ignored_query_params
+				foreach ( $ignored_query_params as $ignored_query_param ) {
+
+					// Check if that query param is present in $current_url_query_params
+					if ( array_key_exists( $ignored_query_param, $current_url_query_params ) ) {
+
+						// The ignored query param is present in the $current_url_query_params. So, unset it from there
+						unset( $current_url_query_params[ $ignored_query_param ] );
+					}
+				}
+
+				// Now lets check if we have any query params left in $current_url_query_params
+				if ( count( $current_url_query_params ) > 0 ) {
+
+					$new_current_url_query_params = http_build_query( $current_url_query_params );
+					$current_url_parsed['query']  = $new_current_url_query_params;
+				} else {
+					// Remove the query section from parsed URL
+					unset( $current_url_parsed['query'] );
+				}
+
+				// Get the new current URL without the marketing query params
+				$current_url = Helpers::get_unparsed_url( $current_url_parsed );
+			}
+		}
+
+		// Time to add the URL to HTML cache
+		$filename = $this->add_url_to_cache( $current_url );
+
+		Logger::log( 'html_cache::add_current_url_to_cache', "Created the file {$filename} for the URL {$current_url}", true );
+	}
+
+	/**
+	 * @param string $url
+	 * @return string
+	 */
+	private function get_cache_key( $url ) {
+		$cache_key  = sha1( $url );
+		$cache_key .= '.tmp';
+
+		return $cache_key;
+	}
+
+	/**
+	 * Folder that holds one file per cached HTML page, kept while "Purge HTML pages only" is on.
+	 *
+	 * @return string
+	 */
+	private function get_directory(): string {
+		return Helpers::get_plugin_content_dir() . '/cached_html_pages/';
+	}
+
+	/**
+	 * Get the cached page files. Does not create the folder.
+	 *
+	 * @return list<string>
+	 */
+	private function get_cached_url_files(): array {
+		$files = glob( $this->get_directory() . '*.tmp' );
+
+		return is_array( $files ) ? $files : [];
+	}
+
+	/**
+	 * Create the folder for the cached page files when it is missing.
+	 *
+	 * @return string
+	 */
+	private function init_directory() {
+		$cache_path = $this->get_directory();
+
+		if ( ! file_exists( $cache_path ) ) {
+			wp_mkdir_p( $cache_path );
+		}
+
+		if ( file_exists( $cache_path ) && ! file_exists( "{$cache_path}index.php" ) ) {
+			file_put_contents( "{$cache_path}index.php", '<?php // Silence is golden' );
+		}
+
+		return $cache_path;
+	}
+
+	/**
+	 * @return void
+	 */
+	public function delete_all_cached_urls() {
+		foreach ( $this->get_cached_url_files() as $single_file ) {
+			if ( is_file( $single_file ) ) {
+				@unlink( $single_file );
+			}
+		}
+	}
+
+	/**
+	 * Remove the page list while "Purge HTML pages only" is off.
+	 *
+	 * A request that started while the option was on still writes its page at shutdown, which can be
+	 * after the settings were saved. So the same cleanup runs again ten minutes after the save that
+	 * turns the option off, and after every run that found files. It stops once a run finds no file.
+	 *
+	 * The option is read when the request starts. A page written after that can come from a request
+	 * that saw the option turned back on, so only older pages are removed; the next run checks the rest.
+	 * When the lock can be taken, the check and the delete run under the page list lock, so no page is
+	 * rewritten in between. Without file lock support they run unlocked. When a page is being written,
+	 * this run does not wait: it leaves the files to the next run.
+	 *
+	 * @return void
+	 */
+	public function delete_unused_cached_urls(): void {
+		if ( Settings_Store::get_instance()->get( Constants::SETTING_PURGE_ONLY_HTML ) ) {
+			return;
+		}
+
+		$files = $this->get_cached_url_files();
+
+		if ( $files === [] ) {
+			return;
+		}
+
+		$lock        = $this->open_lock_file();
+		$would_block = 0;
+
+		// Without file lock support, flock() fails without $would_block: go on unlocked.
+		if ( null !== $lock && ! flock( $lock, LOCK_EX | LOCK_NB, $would_block ) && $would_block ) {
+			fclose( $lock );
+			$this->schedule_cleanup();
+
+			return;
+		}
+
+		$request_start = isset( $_SERVER['REQUEST_TIME'] ) ? absint( $_SERVER['REQUEST_TIME'] ) : time();
+
+		foreach ( $files as $single_file ) {
+			clearstatcache( true, $single_file );
+			$modified = @filemtime( $single_file );
+
+			if ( false !== $modified && $modified < $request_start ) {
+				@unlink( $single_file );
+			}
+		}
+
+		if ( null !== $lock ) {
+			fclose( $lock );
+		}
+
+		$this->schedule_cleanup();
+	}
+
+	/**
+	 * Open the lock file of the page list. The page writer locks it shared, the cleanup exclusive.
+	 * It is opened for reading and writing: NFSv4 rejects a shared lock on a write-only handle.
+	 *
+	 * @return resource|null The open file, or null when it cannot be opened.
+	 */
+	private function open_lock_file() {
+		$handle = @fopen( $this->get_directory() . '.lock', 'c+' );
+
+		return false === $handle ? null : $handle;
+	}
+
+	/**
+	 * Schedule the follow-up cleanup when a settings save turns "Purge HTML pages only" off, also
+	 * when the page list is empty at that moment.
+	 *
+	 * @param mixed $old_value Stored settings before the save.
+	 * @param mixed $value     Stored settings after the save.
+	 *
+	 * @return void
+	 */
+	public function schedule_cleanup_after_turning_off( $old_value, $value ): void {
+		$key = Constants::SETTING_PURGE_ONLY_HTML;
+
+		if ( empty( $old_value[ $key ] ) || ! empty( $value[ $key ] ) ) {
+			return;
+		}
+
+		// Restart the wait: a cleanup left from an earlier save can be due before the running requests finish.
+		wp_clear_scheduled_hook( self::CLEANUP_HOOK );
+		$this->schedule_cleanup();
+	}
+
+	/**
+	 * Run {@see self::delete_unused_cached_urls()} again in ten minutes, unless it is already scheduled.
+	 *
+	 * @return void
+	 */
+	private function schedule_cleanup(): void {
+		if ( ! wp_next_scheduled( self::CLEANUP_HOOK ) ) {
+			wp_schedule_single_event( time() + 10 * MINUTE_IN_SECONDS, self::CLEANUP_HOOK );
+		}
+	}
+
+	/**
+	 * @return int
+	 */
+	public function count_cached_urls() {
+		return count( $this->get_cached_url_files() );
+	}
+
+	/**
+	 * @return array<int, array{url: string, timestamp: string}>
+	 */
+	public function get_cached_urls() {
+		$urls  = [];
+		$files = $this->get_cached_url_files();
+
+		// keep only 1000 files
+		$files = array_slice( $files, 0, 1000 );
+
+		foreach ( $files as $single_file ) {
+			if ( ! is_file( $single_file ) ) {
+				continue;
+			}
+
+			list( $single_url, $single_timestamp ) = $this->parse_cache_file( $single_file );
+
+			if ( strlen( $single_url ) > 1 ) {
+				$urls[] = [
+					'url'       => $single_url,
+					'timestamp' => $single_timestamp,
+				];
+			}
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * Download the full list of cached URLs.
+	 *
+	 * @return void
+	 */
+	public function maybe_download_all_cached_urls() {
+		if ( ! isset( $_GET['swcfpc_download_cached_pages'] ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$format = ( $_GET['swcfpc_download_cached_pages'] === 'csv' ) ? 'csv' : 'txt';
+
+		$this->stream_all_cached_urls( $format );
+
+		exit;
+	}
+
+	/**
+	 * Stream the full list of cached URLs to the browser as a downloadable file.
+	 *
+	 * @param string $format Either 'csv' or 'txt'.
+	 * @return void
+	 */
+	private function stream_all_cached_urls( $format ) {
+		$cache_path = $this->init_directory();
+		$filename   = 'cached-pages-' . gmdate( 'Y-m-d-His' ) . '.' . $format;
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
+
+		header( 'Content-Description: File Transfer' );
+		header( 'Content-Type: text/' . ( $format === 'csv' ? 'csv' : 'plain' ) . '; charset=utf-8' );
+		header( "Content-Disposition: attachment; filename={$filename}" );
+		header( 'Content-Transfer-Encoding: binary' );
+		header( 'Connection: Keep-Alive' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0, s-maxage=0' );
+		header( 'Pragma: public' );
+
+		$date_time_format = 'Y-m-d H:i:s';
+		if ( $format === 'csv' ) {
+			$date_time_format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+			echo "url,timestamp\n";
+		}
+
+		$processed = 0;
+
+		foreach ( new \DirectoryIterator( $cache_path ) as $file_info ) {
+			if ( ! $file_info->isFile() || $file_info->getExtension() !== 'tmp' ) {
+				continue;
+			}
+
+			list( $single_url, $single_timestamp ) = $this->parse_cache_file( $file_info->getPathname() );
+
+			if ( strlen( $single_url ) <= 1 ) {
+				continue;
+			}
+
+			if ( $format === 'csv' ) {
+				echo '"' . str_replace( '"', '""', $single_url ) . '","' . wp_date( $date_time_format, (int) $single_timestamp ) . "\"\n";
+			} else {
+				echo $single_url . "\n";
+			}
+
+			$processed++;
+
+			// Flush periodically so the browser starts receiving data instead of buffering the whole export.
+			if ( $processed % 500 === 0 ) {
+				flush();
+			}
+		}
+
+		flush();
+	}
+
+	/**
+	 * @param int $timestamp
+	 * @return array<int, string>
+	 */
+	public function get_cached_urls_by_timestamp( $timestamp ) {
+		$cache_path = $this->init_directory();
+		$urls       = [];
+
+		// Get a list of all of the file names in the folder.
+		$files = glob( $cache_path . '/*.tmp' );
+		foreach ( $files as $single_file ) {
+			if ( is_file( $single_file ) ) {
+
+				list( $single_url, $single_timestamp ) = $this->parse_cache_file( $single_file );
+
+				if ( $single_timestamp <= $timestamp && strlen( $single_url ) > 1 ) {
+					$urls[] = $single_url;
+				}
+			}
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * @param int $timestamp
+	 * @return void
+	 */
+	public function delete_cached_urls_by_timestamp( $timestamp ) {
+		$cache_path = $this->init_directory();
+
+		// Get a list of all of the file names in the folder.
+		$files = glob( $cache_path . '/*.tmp' );
+
+		foreach ( $files as $single_file ) {
+
+			if ( is_file( $single_file ) ) {
+
+				$file_parts       = $this->parse_cache_file( $single_file );
+				$single_timestamp = isset( $file_parts[1] ) ? $file_parts[1] : '';
+
+				if ( $single_timestamp <= $timestamp ) {
+					unlink( $single_file );
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param array<int, string> $urls
+	 * @return false|void
+	 */
+	public function delete_cached_urls_by_urls_list( $urls ) {
+		if ( ! is_array( $urls ) ) {
+			return false;
+		}
+
+		$cache_path = $this->init_directory();
+		// Get a list of all of the file names in the folder.
+		$files = glob( $cache_path . '/*.tmp' );
+
+		foreach ( $files as $single_file ) {
+			if ( is_file( $single_file ) ) {
+
+				$file_parts = $this->parse_cache_file( $single_file );
+				$single_url = isset( $file_parts[0] ) ? $file_parts[0] : '';
+
+				if ( in_array( $single_url, $urls, true ) ) {
+					unlink( $single_file );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Safely parse a cache file's contents into URL and timestamp.
+	 *
+	 * @param string $single_file Path to the cache file.
+	 *
+	 * @return array{string, string} Two elements: [ string $single_url, string $single_timestamp ].
+	 */
+	private function parse_cache_file( $single_file ) {
+		$contents = @file_get_contents( $single_file );
+		if ( false === $contents ) {
+			return array( '', '' );
+		}
+
+		$file_parts       = explode( '|', $contents );
+		$single_url       = isset( $file_parts[0] ) ? $file_parts[0] : '';
+		$single_timestamp = isset( $file_parts[1] ) ? $file_parts[1] : '';
+		return array( $single_url, $single_timestamp );
+	}
+}

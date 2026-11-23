@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --gold-primary: #c5a880;
+  --gold-secondary: #b59265;
+  --gold-dark: #8c6a38;
+  --gold-light: #f3e9d8;
+  --gold-shimmer: #dfcaa7;
+  --gold-bright: #d4af37;
+  
+  --navy-deep: #07111e;
+  --navy-primary: #0b1a2d;
+  --navy-surface: #112239;
+  --navy-card: #152945;
+  --navy-border: rgba(197, 168, 128, 0.25);
+  
+  --cream-bg: #faf8f5;
+  --cream-surface: #f4efe7;
+  --cream-muted: #e7dfd1;
+
+  --text-main: #1c2430;
+  --text-muted: #5e6d82;
+  --text-light: #f8fafc;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0b1a2d;
+}
+::-webkit-scrollbar-thumb {
+  background: #c5a880;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+/* Base resets & typography */
+html {
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text-main);
+  background-color: var(--cream-bg);
+}
+
+.font-serif,
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-accent {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* Luxury Gold Gradients & Text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #dfcaa7 0%, #c5a880 50%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gold-shine {
+  background: linear-gradient(90deg, #c5a880, #fff2dd, #c5a880);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #c5a880 0%, #b59265 50%, #a07a48 100%);
+}
+
+.bg-gold-gradient-hover:hover {
+  background: linear-gradient(135deg, #d4af37 0%, #c5a880 50%, #b59265 100%);
+}
+
+/* Glassmorphism Styles */
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(197, 168, 128, 0.3);
+}
+
+.glass-panel-dark {
+  background: rgba(11, 26, 45, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(197, 168, 128, 0.22);
+}
+
+.glass-dropdown {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px -15px rgba(11, 26, 45, 0.15);
+}
+
+/* Shimmer & Glow Effects */
+.gold-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gold-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 20%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    rgba(255, 255, 255, 0) 20%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  transform: rotate(25deg);
+  transition: all 0.75s ease;
+}
+
+.gold-shimmer-btn:hover::after {
+  left: 140%;
+}
+
+.gold-glow {
+  box-shadow: 0 0 25px rgba(197, 168, 128, 0.35);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 10px 30px rgba(197, 168, 128, 0.45);
+}
+
+/* Hero Parallax overlay */
+.hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(7, 17, 30, 0.55) 0%,
+    rgba(11, 26, 45, 0.65) 60%,
+    rgba(7, 17, 30, 0.95) 100%
+  );
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Pulse Glow Animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(197, 168, 128, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(197, 168, 128, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+/* Card hover zoom */
+.image-zoom-container {
+  overflow: hidden;
+}
+
+.image-zoom-container img {
+  transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.image-zoom-container:hover img {
+  transform: scale(1.08);
+}
+
+/* Swiper custom pagination & arrows */
+.swiper-button-next-custom,
+.swiper-button-prev-custom {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(197, 168, 128, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy-primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.swiper-button-next-custom:hover,
+.swiper-button-prev-custom:hover {
+  background: var(--gold-primary);
+  color: #ffffff;
+  border-color: var(--gold-primary);
+  transform: scale(1.08);
+}
+
+.swiper-pagination-bullet-active {
+  background: var(--gold-primary) !important;
+  width: 24px !important;
+  border-radius: 6px !important;
+}
+
+/* Tab active highlight */
+.tab-btn.active {
+  background: var(--gold-primary);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(197, 168, 128, 0.35);
+}
+
+/* Modal styles */
+.modal-backdrop {
+  background: rgba(7, 17, 30, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+/* VR 360 badge pulse */
+.vr-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Floating Hotline Ripple */
+.hotline-ripple {
+  position: relative;
+}
+.hotline-ripple::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid #c5a880;
+  animation: hotlineRing 1.8s infinite;
+}
+@keyframes hotlineRing {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Popular Amenities Card Hover */
+#popular-amenities-container > div {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#popular-amenities-container > div:hover {
+  transform: translateY(-3px);
+  border-color: #c5a880;
+  box-shadow: 0 10px 25px -5px rgba(197, 168, 128, 0.22), 0 8px 10px -6px rgba(197, 168, 128, 0.12);
+}
+#popular-amenities-container > div:hover svg {
+  transform: scale(1.1);
+  transition: transform 0.25s ease;
+}
+

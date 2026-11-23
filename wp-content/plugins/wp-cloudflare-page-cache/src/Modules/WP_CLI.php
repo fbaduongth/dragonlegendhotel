@@ -1,0 +1,729 @@
+<?php
+
+namespace SPC\Modules;
+
+use SPC\Constants;
+use SPC\Services\Cloudflare_Integration;
+use SPC\Services\Settings_Store;
+use SPC\Services\Varnish;
+use SPC\Utils\Cache_Tester;
+use SPC\Utils\Logger;
+
+defined( 'ABSPATH' ) || die( 'Cheatin&#8217; uh?' );
+
+class WP_CLI extends \WP_CLI_Command implements Module_Interface {
+	public function init(): void {
+		\WP_CLI::add_command( 'cfcache', $this );
+	}
+
+	/**
+	 * Show current Super Page Cache version
+	 *
+	 * @when after_wp_load
+	 */
+	public function version(): void {
+		\WP_CLI::line( sprintf( 'Super Page Cache %s', get_option( 'swcfpc_version', false ) ) );
+	}
+
+	/**
+	 * Show the current plugin status.
+	 *
+	 * `fallback_cache_enabled` reports configured intent; `fallback_cache_active`
+	 * reports whether the fallback cache is effectively caching. Run `cfcache doctor`
+	 * for the reason when the two disagree.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json, or yaml.
+	 * ---
+	 * default: table
+	 * ---
+	 *
+	 * @param list<string>         $_args     Positional arguments.
+	 * @param array<string, mixed> $assoc_args Named arguments.
+	 *
+	 * @when after_wp_load
+	 */
+	public function status( array $_args, array $assoc_args ): void {
+		$format = $assoc_args['format'] ?? 'table';
+
+		$this->format_assoc_output(
+			$this->build_status_payload( Settings_Store::get_instance(), new Cloudflare_Integration() ),
+			$format
+		);
+	}
+
+	/**
+	 * Build the field set reported by the status command.
+	 *
+	 * @param Settings_Store        $settings   Settings service.
+	 * @param Cloudflare_Integration $cloudflare Cloudflare integration service.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function build_status_payload( Settings_Store $settings, Cloudflare_Integration $cloudflare ): array {
+		$preloader_lock = (int) get_option( 'swcfpc_preloader_lock', 0 );
+		$lock_age       = $preloader_lock > 0 ? time() - $preloader_lock : 0;
+		$zone_list      = $settings->get( Constants::ZONE_ID_LIST );
+		$override_count = count(
+			array_filter(
+				$settings->get_all_with_source( true ),
+				static function ( $setting ) {
+					return Settings_Store::CONFIG_SOURCE_CONST === $setting['source'];
+				}
+			)
+		);
+
+		$fallback_state  = $this->get_advanced_cache_runtime_state( $settings );
+		$fallback_active = $this->is_fallback_cache_active(
+			$fallback_state['configured'],
+			$fallback_state['cache_enabled'],
+			$fallback_state['curl_mode'],
+			$fallback_state['drop_in_exists'],
+			$fallback_state['active_version'],
+			$fallback_state['wp_cache_enabled']
+		);
+
+		return [
+			'plugin_version'                        => SWCFPC_VERSION,
+			'cloudflare_connected'                  => $settings->is_cloudflare_connected(),
+			'cloudflare_api_enabled'                => $cloudflare->is_enabled(),
+			'cloudflare_auth_mode'                  => $this->get_auth_mode_label( $settings->get_cloudflare_auth_mode() ),
+			'cloudflare_zone_selected'              => '' !== (string) $settings->get_cloudflare_zone_id(),
+			'cloudflare_zone_candidates'            => is_array( $zone_list ) ? count( $zone_list ) : 0,
+			'cache_rule_configured'                 => $cloudflare->has_cache_rule(),
+			'page_cache_enabled'                    => $settings->is_cache_enabled(),
+			'fallback_cache_enabled'                => (bool) $settings->get( Constants::SETTING_ENABLE_FALLBACK_CACHE ),
+			'fallback_cache_active'                 => $fallback_active,
+			'preloader_enabled'                     => (bool) $settings->get( Constants::SETTING_ENABLE_PRELOADER ),
+			'preloader_running'                     => $preloader_lock > 0 && $lock_age <= 15 * MINUTE_IN_SECONDS,
+			'preloader_lock_age'                    => $preloader_lock > 0 ? $lock_age : '',
+			'logs_enabled'                          => (bool) $settings->get( Constants::SETTING_LOG_ENABLED ),
+			'invalid_encryption_state'              => $settings->has_invalid_encryption_state(),
+			'cloudflare_credentials_need_attention' => $settings->has_unreadable_active_cloudflare_credentials(),
+			'wp_config_overrides'                   => $override_count,
+		];
+	}
+
+	/**
+	 * Run a reliable plugin health check.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json, or yaml.
+	 * ---
+	 * default: table
+	 * ---
+	 *
+	 * [--run-cache-test]
+	 * : Include best-effort runtime cache tests.
+	 *
+	 * @param list<string>         $_args     Positional arguments.
+	 * @param array<string, mixed> $assoc_args Named arguments.
+	 *
+	 * @when after_wp_load
+	 */
+	public function doctor( array $_args, array $assoc_args ): void {
+		$settings                      = Settings_Store::get_instance();
+		$cloudflare                    = new Cloudflare_Integration();
+		$format                        = $assoc_args['format'] ?? 'table';
+		$run_cache_test                = \WP_CLI\Utils\get_flag_value( $assoc_args, 'run-cache-test', false );
+		$zone_selected                 = '' !== (string) $settings->get_cloudflare_zone_id();
+		$auth_mode                     = $settings->get_cloudflare_auth_mode();
+		$has_credentials               = (
+			( SWCFPC_AUTH_MODE_API_KEY === $auth_mode && '' !== (string) $settings->get_cloudflare_api_email() && '' !== (string) $settings->get_cloudflare_api_key() ) ||
+			( SWCFPC_AUTH_MODE_API_TOKEN === $auth_mode && '' !== (string) $settings->get_cloudflare_api_token() )
+		);
+		$actionable_invalid_encryption = $settings->has_unreadable_active_cloudflare_credentials();
+
+		$checks = [
+			[
+				'check'   => 'encryption_state',
+				'status'  => $actionable_invalid_encryption ? 'fail' : 'pass',
+				'type'    => 'config',
+				'details' => $actionable_invalid_encryption
+					? 'The active Cloudflare credential is no longer readable.'
+					: 'The active Cloudflare credential is readable.',
+			],
+			[
+				'check'   => 'cloudflare_credentials',
+				'status'  => $has_credentials ? 'pass' : 'warn',
+				'type'    => 'config',
+				'details' => $has_credentials ? 'Cloudflare credentials are configured.' : 'Cloudflare credentials are not fully configured.',
+			],
+			[
+				'check'   => 'cloudflare_zone',
+				'status'  => $zone_selected ? 'pass' : 'warn',
+				'type'    => 'config',
+				'details' => $zone_selected ? 'A Cloudflare zone is selected.' : 'No Cloudflare zone is selected.',
+			],
+			[
+				'check'   => 'cache_rule',
+				'status'  => $cloudflare->has_cache_rule() ? 'pass' : 'warn',
+				'type'    => 'config',
+				'details' => $cloudflare->has_cache_rule() ? 'A Cloudflare cache rule is configured.' : 'No Cloudflare cache rule is configured.',
+			],
+			[
+				'check'   => 'page_cache',
+				'status'  => $settings->is_cache_enabled() ? 'pass' : 'warn',
+				'type'    => 'config',
+				'details' => $settings->is_cache_enabled() ? 'Page cache is enabled.' : 'Page cache is disabled.',
+			],
+			[
+				'check'   => 'logging',
+				'status'  => $settings->get( Constants::SETTING_LOG_ENABLED ) ? 'pass' : 'info',
+				'type'    => 'config',
+				'details' => $settings->get( Constants::SETTING_LOG_ENABLED ) ? 'Logging is enabled.' : 'Logging is disabled.',
+			],
+			[
+				'check'   => 'preloader',
+				'status'  => $settings->get( Constants::SETTING_ENABLE_PRELOADER ) ? 'pass' : 'info',
+				'type'    => 'config',
+				'details' => $settings->get( Constants::SETTING_ENABLE_PRELOADER ) ? 'Preloader is enabled.' : 'Preloader is disabled.',
+			],
+		];
+
+		$checks = array_merge( $checks, $this->get_advanced_cache_health_checks( $settings ) );
+
+		if ( $run_cache_test ) {
+			$test_results = ( new Cache_Tester() )->cli_test();
+
+			$checks[] = [
+				'check'   => 'cache_test_overall',
+				'status'  => 'success' === $test_results['overall_status'] ? 'pass' : 'warn',
+				'type'    => 'best_effort',
+				'details' => $test_results['message'] ?? 'Runtime cache test completed.',
+			];
+		}
+
+		$this->format_items_output( $checks, [ 'check', 'status', 'type', 'details' ], $format );
+
+		foreach ( $checks as $check ) {
+			if ( 'fail' === $check['status'] ) {
+				\WP_CLI::halt( 4 );
+			}
+		}
+	}
+
+	/**
+	 * Build runtime health checks for the advanced disk-cache integration.
+	 *
+	 * @param Settings_Store $settings Settings service.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private function get_advanced_cache_health_checks( Settings_Store $settings ): array {
+		$state = $this->get_advanced_cache_runtime_state( $settings );
+
+		return $this->build_advanced_cache_health_checks(
+			$state['required'],
+			$state['drop_in_exists'],
+			$state['active_version'],
+			$state['wp_cache_enabled']
+		);
+	}
+
+	/**
+	 * Resolve the observed advanced disk-cache runtime state.
+	 *
+	 * Shared by the status and doctor commands so the two can never disagree about
+	 * whether the drop-in is required and whether it is healthy.
+	 *
+	 * @param Settings_Store $settings Settings service.
+	 *
+	 * @return array{configured: bool, cache_enabled: bool, curl_mode: bool, required: bool, drop_in_exists: bool, active_version: string|null, wp_cache_enabled: bool}
+	 */
+	private function get_advanced_cache_runtime_state( Settings_Store $settings ): array {
+		$configured    = (bool) $settings->get( Constants::SETTING_ENABLE_FALLBACK_CACHE );
+		$cache_enabled = $settings->is_cache_enabled();
+		$curl_mode     = (bool) $settings->get( Constants::SETTING_FALLBACK_CACHE_CURL );
+
+		return [
+			'configured'       => $configured,
+			'cache_enabled'    => $cache_enabled,
+			'curl_mode'        => $curl_mode,
+			'required'         => $cache_enabled && $configured && ! $curl_mode,
+			'drop_in_exists'   => $this->advanced_cache_drop_in_exists(),
+			'active_version'   => $this->get_active_advanced_cache_version(),
+			'wp_cache_enabled' => $this->is_wp_cache_enabled(),
+		];
+	}
+
+	/**
+	 * Whether the advanced-cache.php drop-in is present in wp-content.
+	 *
+	 * @return bool
+	 */
+	protected function advanced_cache_drop_in_exists(): bool {
+		return is_file( WP_CONTENT_DIR . '/advanced-cache.php' );
+	}
+
+	/**
+	 * Version reported by the drop-in WordPress actually loaded, if any.
+	 *
+	 * @return string|null
+	 */
+	protected function get_active_advanced_cache_version(): ?string {
+		return defined( 'SWCFPC_ADVANCED_CACHE_VERSION' ) ? (string) SWCFPC_ADVANCED_CACHE_VERSION : null;
+	}
+
+	/**
+	 * Whether WP_CACHE is defined as enabled.
+	 *
+	 * @return bool
+	 */
+	protected function is_wp_cache_enabled(): bool {
+		return defined( 'WP_CACHE' ) && (bool) WP_CACHE;
+	}
+
+	/**
+	 * Whether the fallback cache is effectively caching, not merely configured.
+	 *
+	 * In drop-in mode advanced-cache.php is the only writer of cache entries, so a
+	 * missing, stale or never-loaded drop-in leaves disk caching inactive. cURL mode
+	 * writes from the plugin itself and needs no drop-in.
+	 *
+	 * @param bool        $configured       Whether the fallback cache setting is on.
+	 * @param bool        $cache_enabled    Whether the page cache is enabled.
+	 * @param bool        $curl_mode        Whether the cURL fallback cache mode is on.
+	 * @param bool        $drop_in_exists   Whether wp-content/advanced-cache.php is a file.
+	 * @param string|null $active_version   Version reported by the active SPC drop-in.
+	 * @param bool        $wp_cache_enabled Whether WP_CACHE is defined as enabled.
+	 *
+	 * @return bool
+	 */
+	private function is_fallback_cache_active( bool $configured, bool $cache_enabled, bool $curl_mode, bool $drop_in_exists, ?string $active_version, bool $wp_cache_enabled ): bool {
+		if ( ! $configured || ! $cache_enabled ) {
+			return false;
+		}
+
+		if ( $curl_mode ) {
+			return true;
+		}
+
+		return $drop_in_exists && SWCFPC_VERSION === $active_version && $wp_cache_enabled;
+	}
+
+	/**
+	 * Create deterministic doctor rows from the observed runtime state.
+	 *
+	 * @param bool        $required          Whether current settings require the drop-in.
+	 * @param bool        $drop_in_exists    Whether wp-content/advanced-cache.php is a file.
+	 * @param string|null $active_version    Version reported by the active SPC drop-in.
+	 * @param bool        $wp_cache_enabled  Whether WP_CACHE is defined as enabled.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private function build_advanced_cache_health_checks( bool $required, bool $drop_in_exists, ?string $active_version, bool $wp_cache_enabled ): array {
+		if ( ! $required ) {
+			$not_required = 'The advanced-cache.php drop-in is not required by the current fallback cache settings.';
+
+			return [
+				[
+					'check'   => 'advanced_cache_drop_in',
+					'status'  => 'info',
+					'type'    => 'runtime',
+					'details' => $not_required,
+				],
+				[
+					'check'   => 'advanced_cache_version',
+					'status'  => 'info',
+					'type'    => 'runtime',
+					'details' => $not_required,
+				],
+				[
+					'check'   => 'wp_cache',
+					'status'  => 'info',
+					'type'    => 'runtime',
+					'details' => $not_required,
+				],
+			];
+		}
+
+		$version_matches = $drop_in_exists && null !== $active_version && SWCFPC_VERSION === $active_version;
+
+		if ( ! $drop_in_exists ) {
+			$version_details = 'The advanced-cache.php version cannot be verified because the drop-in is missing.';
+		} elseif ( null === $active_version ) {
+			$version_details = 'The active advanced-cache.php does not report an SPC version.';
+		} elseif ( ! $version_matches ) {
+			$version_details = sprintf( 'The active advanced-cache.php version (%s) does not match the plugin version (%s).', $active_version, SWCFPC_VERSION );
+		} else {
+			$version_details = sprintf( 'The active advanced-cache.php matches plugin version %s.', SWCFPC_VERSION );
+		}
+
+		return [
+			[
+				'check'   => 'advanced_cache_drop_in',
+				'status'  => $drop_in_exists ? 'pass' : 'fail',
+				'type'    => 'runtime',
+				'details' => $drop_in_exists ? 'The advanced-cache.php drop-in exists.' : 'The advanced-cache.php drop-in is missing from wp-content.',
+			],
+			[
+				'check'   => 'advanced_cache_version',
+				'status'  => $version_matches ? 'pass' : 'fail',
+				'type'    => 'runtime',
+				'details' => $version_details,
+			],
+			[
+				'check'   => 'wp_cache',
+				'status'  => $wp_cache_enabled ? 'pass' : 'fail',
+				'type'    => 'runtime',
+				'details' => $wp_cache_enabled ? 'WP_CACHE is enabled.' : 'WP_CACHE is not defined as enabled.',
+			],
+		];
+	}
+
+	/**
+	 * Purge whole caches
+	 *
+	 * @when after_wp_load
+	 */
+	public function purge_cache(): void {
+		if ( Cache_Controller::purge_all() ) {
+			\WP_CLI::success( __( 'Cache purged successfully.', 'wp-cloudflare-page-cache' ) );
+		} else {
+			\WP_CLI::error( __( 'An error occurred while purging the cache', 'wp-cloudflare-page-cache' ) );
+		}
+	}
+
+	/**
+	 * Purge the whole Cloudflare cache only
+	 *
+	 * @when after_wp_load
+	 */
+	public function purge_cf_cache(): void {
+		$error = '';
+
+		if ( ! ( new Cloudflare_Integration() )->purge_cache( $error ) ) {
+			\WP_CLI::error( $error );
+		}
+
+		\WP_CLI::success( __( 'Cache purged successfully.', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Purge the whole Varnish cache only
+	 *
+	 * @when after_wp_load
+	 */
+	public function purge_varnish_cache(): void {
+		$error = '';
+
+		$varnish_handler = new Varnish();
+
+		if ( ! $varnish_handler->purge_whole_cache( $error ) ) {
+			\WP_CLI::error( $error );
+		}
+
+		\WP_CLI::success( __( 'Cache purged successfully.', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Purge the whole OPcache cache only
+	 *
+	 * @when after_wp_load
+	 */
+	public function purge_opcache_cache(): void {
+		Cache_Controller::purge_opcache();
+
+		\WP_CLI::success( __( 'Cache purged successfully.', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Purge the whole Fallback cache only
+	 *
+	 * @when after_wp_load
+	 */
+	public function purge_fallback_cache(): void {
+		global $sw_cloudflare_pagecache;
+
+		$sw_cloudflare_pagecache->get_core_loader()->fallback_cache()->fallback_cache_purge_all();
+
+		\WP_CLI::success( __( 'Cache purged successfully.', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Enable Cloudflare page cache
+	 *
+	 * @when after_wp_load
+	 */
+	public function enable_cf_cache(): void {
+		$error = '';
+
+		if ( ! ( new Cloudflare_Integration() )->enable_page_cache( $error ) ) {
+			\WP_CLI::error( $error );
+		}
+
+		\WP_CLI::success( __( 'Cache enabled successfully', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Disable Cloudflare page cache
+	 *
+	 * @when after_wp_load
+	 */
+	public function disable_cf_cache(): void {
+		$error = '';
+
+		if ( ! ( new Cloudflare_Integration() )->disable_page_cache( $error ) ) {
+			\WP_CLI::error( $error );
+		}
+
+		\WP_CLI::success( __( 'Cache disabled successfully', 'wp-cloudflare-page-cache' ) );
+	}
+
+	/**
+	 * Test Cloudflare page cache
+	 *
+	 * @when after_wp_load
+	 */
+	public function test_cf_cache(): void {
+		$error_dynamic = '';
+		$error_static  = '';
+
+		$url_static_resource  = SWCFPC_PLUGIN_URL . 'assets/testcache.html';
+		$url_dynamic_resource = home_url();
+
+		$return_array['static_resource_url']  = $url_static_resource;
+		$return_array['dynamic_resource_url'] = $url_dynamic_resource;
+
+		$headers_dyamic_resource = $this->page_cache_test( $url_dynamic_resource, $error_dynamic );
+
+		if ( ! $headers_dyamic_resource ) {
+
+			$headers_static_resource = $this->page_cache_test( $url_static_resource, $error_static, true );
+			$error                   = '';
+
+			// Error on both dynamic and static test
+			if ( ! $headers_static_resource ) {
+
+				$error .= __( 'Page caching does not appear to be working for either dynamic or static pages.', 'wp-cloudflare-page-cache' );
+				$error .= '<br/><br/>';
+				// translators: %1$s is the dynamic resource URL, %2$s is the error message.
+				$error .= sprintf( __( 'Error on dynamic page (%1$s): %2$s', 'wp-cloudflare-page-cache' ), $url_dynamic_resource, $error_dynamic );
+				$error .= '<br/><br/>';
+				// translators: %1$s is the static resource URL, %2$s is the error message.
+				$error .= sprintf( __( 'Error on static resource (%1$s): %2$s', 'wp-cloudflare-page-cache' ), $url_static_resource, $error_static );
+
+			} else {
+				// Error on dynamic test only
+				// translators: %s is the static resource URL.
+				$error .= sprintf( __( 'Page caching is working for the static page (%s) but does not appear to be working for dynamic pages.', 'wp-cloudflare-page-cache' ), $url_static_resource );
+				$error .= '<br/><br/>';
+				// translators: %1$s is the dynamic resource URL, %2$s is the error message.
+				$error .= sprintf( __( 'Error on dynamic page (%1$s): %2$s', 'wp-cloudflare-page-cache' ), $url_dynamic_resource, $error_dynamic );
+
+			}
+
+			\WP_CLI::error( $error );
+
+		}
+
+		\WP_CLI::success( __( 'Page caching is working properly', 'wp-cloudflare-page-cache' ) );
+	}
+
+	private function page_cache_test( string $url, string &$error, bool $test_static = false ): bool {
+		$args = [
+			'timeout'    => defined( 'SWCFPC_CURL_TIMEOUT' ) ? SWCFPC_CURL_TIMEOUT : 10,
+			'sslverify'  => false,
+			'user-agent' => 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0',
+			'headers'    => [
+				'Accept' => 'text/html',
+			],
+		];
+
+		Logger::log( 'cloudflare::page_cache_test', "Start test to {$url} with headers " . print_r( $args, true ) );
+
+		$response = wp_remote_get( esc_url_raw( $url ), $args );
+
+		if ( is_wp_error( $response ) ) {
+			$error = __( 'Connection error: ', 'wp-cloudflare-page-cache' ) . $response->get_error_message();
+			Logger::log( 'cloudflare::page_cache_test', "Error wp_remote_get: {$error}" );
+
+			return false;
+		}
+
+		$headers = wp_remote_retrieve_headers( $response );
+
+		Logger::log( 'cloudflare::page_cache_test', 'Response Headers: ' . var_export( $headers, true ) );
+
+		if ( ! $test_static && ! isset( $headers['X-WP-CF-Super-Cache'] ) ) {
+			$error = __( 'Plugin not detected on your home page. Disable any other caching systems and retry the test.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( ! $test_static && $headers['X-WP-CF-Super-Cache'] == 'no-cache' ) {
+			$error = __( 'The cache is not enabled on your home page. It\'s not possible to verify if the page caching is working properly.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( ! isset( $headers['CF-Cache-Status'] ) ) {
+			$error = __( 'It seems your website is not behind Cloudflare. If you\'ve recently enabled the cache or this is your first test, wait about 30 seconds and try again — changes take a few seconds to propagate. If the error persists, contact support for a detailed check.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( ! isset( $headers['Cache-Control'] ) ) {
+			$error = __( 'Unable to find the Cache-Control response header.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( ! $test_static && ! isset( $headers['X-WP-CF-Super-Cache-Cache-Control'] ) ) {
+			$error = __( 'Unable to find the X-WP-CF-Super-Cache-Cache-Control response header.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( strcasecmp( $headers['Cache-Control'], '{resp:x-wp-cf-super-cache-cache-control}' ) == 0 ) {
+			$error = __( 'Invalid Cache-Control response header. If you are using LiteSpeed Server, please disable the option <strong>Overwrite the cache-control header for WordPress\'s pages using web server rules</strong>, purge the cache and retry.', 'wp-cloudflare-page-cache' );
+
+			return false;
+		}
+
+		if ( strcasecmp( $headers['CF-Cache-Status'], 'HIT' ) == 0 || strcasecmp( $headers['CF-Cache-Status'], 'MISS' ) == 0 || strcasecmp( $headers['CF-Cache-Status'], 'EXPIRED' ) == 0 ) {
+			return true;
+		}
+
+		$is_swr_enabled = $this->should_allow_swr_cache_status( $headers );
+
+		if ( strcasecmp( $headers['CF-Cache-Status'], 'REVALIDATED' ) == 0 ) {
+			if ( $is_swr_enabled ) {
+				return true;
+			}
+
+			// translators: %s is the CF-Cache-Status header value.
+			$error = sprintf( __( 'Cache status: %s — The cached resource is stale and was revalidated using conditional headers.', 'wp-cloudflare-page-cache' ), $headers['CF-Cache-Status'] );
+
+			return false;
+		}
+
+		if ( strcasecmp( $headers['CF-Cache-Status'], 'UPDATING' ) == 0 ) {
+			if ( $is_swr_enabled ) {
+				return true;
+			}
+
+			// translators: %s is the CF-Cache-Status header value.
+			$error = sprintf( __( 'Cache status: %s — The cached resource has expired and is being refreshed. This status is common for high-traffic resources.', 'wp-cloudflare-page-cache' ), $headers['CF-Cache-Status'] );
+
+			return false;
+		}
+
+		if ( strcasecmp( $headers['CF-Cache-Status'], 'BYPASS' ) == 0 ) {
+			// translators: %s is the CF-Cache-Status header value.
+			$error = sprintf( __( 'Cache status: %s - Cloudflare has been instructed to not cache this asset. It has been served directly from the origin.', 'wp-cloudflare-page-cache' ), $headers['CF-Cache-Status'] );
+
+			return false;
+		}
+
+		if ( strcasecmp( $headers['CF-Cache-Status'], 'DYNAMIC' ) == 0 ) {
+
+			$cookies = wp_remote_retrieve_cookies( $response );
+
+			if ( ! empty( $cookies ) && count( $cookies ) > 1 ) {
+				// translators: %s is the CF-Cache-Status header value.
+				$error = sprintf( __( 'Cache status: %s - The resource was not cached by default and your current Cloudflare caching configuration doesn\'t instruct Cloudflare to cache the resource. Try to enable the <strong>Strip response cookies on pages that should be cached</strong> option and retry.', 'wp-cloudflare-page-cache' ), $headers['CF-Cache-Status'] );
+			} else {
+				// translators: %s is the CF-Cache-Status header value.
+				$error = sprintf( __( 'Cache status: %s - The resource was not cached by default and your current Cloudflare caching configuration doesn\'t instruct Cloudflare to cache the resource.  Instead, the resource was requested from the origin web server.', 'wp-cloudflare-page-cache' ), $headers['CF-Cache-Status'] );
+			}
+
+			return false;
+		}
+
+		$error = __( 'Undefined error', 'wp-cloudflare-page-cache' );
+
+		return false;
+	}
+
+	/**
+	 * Format associative data for CLI output.
+	 *
+	 * @param array<string, mixed> $data   Data.
+	 * @param string              $format Output format.
+	 *
+	 * @return void
+	 */
+	private function format_assoc_output( array $data, string $format ): void {
+		if ( in_array( $format, [ 'json', 'yaml' ], true ) ) {
+			\WP_CLI::print_value( $data, [ 'format' => $format ] );
+			return;
+		}
+
+		$items = [];
+		foreach ( $data as $key => $value ) {
+			$items[] = [
+				'key'   => $key,
+				'value' => $this->normalize_cli_value( $value ),
+			];
+		}
+
+		\WP_CLI\Utils\format_items( 'table', $items, [ 'key', 'value' ] );
+	}
+
+	/**
+	 * Format list data for CLI output.
+	 *
+	 * @param array<int, array<string, mixed>> $items  Items.
+	 * @param list<string>                    $fields Fields.
+	 * @param string                          $format Output format.
+	 *
+	 * @return void
+	 */
+	private function format_items_output( array $items, array $fields, string $format ): void {
+		if ( in_array( $format, [ 'json', 'yaml' ], true ) ) {
+			\WP_CLI::print_value( $items, [ 'format' => $format ] );
+			return;
+		}
+
+		\WP_CLI\Utils\format_items( 'table', $items, $fields );
+	}
+
+	/**
+	 * Normalize values for table output.
+	 *
+	 * @param mixed $value Value.
+	 *
+	 * @return string
+	 */
+	private function normalize_cli_value( $value ): string {
+		if ( is_bool( $value ) ) {
+			return $value ? 'true' : 'false';
+		}
+
+		if ( null === $value ) {
+			return '';
+		}
+
+		if ( is_scalar( $value ) ) {
+			return (string) $value;
+		}
+
+		$encoded = wp_json_encode( $value );
+
+		return false !== $encoded ? $encoded : '';
+	}
+
+	/**
+	 * Get the auth mode label.
+	 *
+	 * @param int $auth_mode Auth mode.
+	 *
+	 * @return string
+	 */
+	private function get_auth_mode_label( int $auth_mode ): string {
+		return SWCFPC_AUTH_MODE_API_KEY === $auth_mode ? 'api_key' : 'api_token';
+	}
+
+	/**
+	 * @param array<string, mixed>|\WpOrg\Requests\Utility\CaseInsensitiveDictionary $headers
+	 */
+	private function should_allow_swr_cache_status( $headers ): bool {
+		return Settings_Store::get_instance()->response_has_swr_directive( $headers );
+	}
+}
