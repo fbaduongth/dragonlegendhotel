@@ -1,4 +1,4 @@
-# Dragon Legend Hotel Hạ Long — Hệ Thống Website & Đặt Phòng Khách Sạn 4 Sao
+f# Dragon Legend Hotel Hạ Long — Hệ Thống Website & Đặt Phòng Khách Sạn 4 Sao
 
 Website chính thức của **Dragon Legend Hotel Hạ Long** ([https://dragonlegendhotel.com](https://dragonlegendhotel.com)) — Khách sạn 4 sao phong cách Tân Cổ Điển tọa lạc tại trung tâm Đại lộ Hạ Long Marine, Bãi Cháy, TP. Hạ Long, Quảng Ninh.
 
@@ -140,8 +140,6 @@ DragonLegendHotel/
 ## 🔒 Bảo Mật & Các Thông Tin Đã Được Ẩn / Loại Trừ
 
 Khi đưa mã nguồn lên GitHub, hệ thống đã được cấu hình [`.gitignore`](.gitignore) và làm sạch dữ liệu nhạy cảm:
-- **Loại trừ thư mục sao lưu**: Đã loại trừ hoàn toàn thư mục `backup_27102026` cũng như toàn bộ các thư mục chứa bản sao lưu cục bộ (`backup_dragonlegendhotel_*`, `wp-content/aiowps_backups/`, `wp-content/updraft/`, `wp-content/upgrade-temp-backup/`).
-- **Loại trừ tệp cơ sở dữ liệu**: Các tệp `.sql`, `.sql.gz`, `.sqlite` chứa dữ liệu khách hàng và băm mật khẩu được loại trừ khỏi Git.
 - **Ẩn thông tin xác thực trong [`wp-config.php`](wp-config.php)**:
   - Toàn bộ khóa bảo mật WordPress (`AUTH_KEY`, `SECURE_AUTH_KEY`, `LOGGED_IN_KEY`, `NONCE_KEY` & `SALT`) được chuyển sang đọc từ biến môi trường `getenv()`.
   - Khóa kết nối **Cloudflare R2 (`ADVMO_CLOUDFLARE_R2_KEY`, `ADVMO_CLOUDFLARE_R2_SECRET`, `ADVMO_CLOUDFLARE_R2_ENDPOINT`)** và mật khẩu cơ sở dữ liệu thực tế đã được ẩn hoàn toàn.
