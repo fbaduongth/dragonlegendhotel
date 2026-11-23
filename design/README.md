@@ -54,14 +54,6 @@ e:\PROJECT\DragonLegendHotel\
 ```
 
 ---
-
-## 🚀 Cách mở và trải nghiệm website
-
-### Cách 1: Khởi chạy máy chủ cục bộ (Khuyên dùng)
-Mở PowerShell hoặc Terminal tại thư mục dự án và chạy:
-```powershell
-agy-node server.js
-```
 Sau đó mở trình duyệt và truy cập: **`http://localhost:3000`**
 
 ### Cách 2: Mở trực tiếp file HTML
